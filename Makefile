@@ -5,22 +5,24 @@ BUILDDIR    = './build'
 BOARDCONFIG = 'esp8266:esp8266:nodemcuv2:CpuFrequency=80,VTable=flash,FlashSize=4M1M,LwIPVariant=v2mss536,Debug=Disabled '
 
 
-.PHONY: all
+.PHONY: all clean build install
 
-all: clean build install cleanbuild
+all: build install cleanbuild
 
-clean: cleanbuild
+clean: 
+	rm -rf ${BUILDDIR}
 	rm -rf ${BINARY}
 
-build:
+build: clean 
 	arduino --verify \
+		-v \
 		--pref build.path=${BUILDDIR} \
 		--board ${BOARDCONFIG} \
 		${SRCFILE}
 
 install:
+	rm -rf ${BINARY}
 	cp ${BUILDDIR}/*.bin ${BINARY}
 
 cleanbuild:
 	rm -rf ${BUILDDIR}
-
