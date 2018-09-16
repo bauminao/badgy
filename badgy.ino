@@ -26,6 +26,7 @@ byte buttonState = 0;
 byte lastButtonState = 0;   //the previous reading from the input pin
 unsigned long lastDebounceTime = 0;  //the last time the output pin was toggled
 unsigned long debounceDelay = 50;    //the debounce time
+int allreadystarted = 0;             // checks if updateserver was allready started.
 
 void setup()
 {  
@@ -41,14 +42,8 @@ void setup()
   WiFiManager wifiManager;
   wifiManager.autoConnect("Badgy AP");
 
-  /* Once connected to WiFi, startup the OTA update server */
-  /* In other sketches, we enter OTA mode only when center button is pressed i.e. digitalRead(5)  == 0 */
-  /* But in this default sketch, it is always in OTA mode on boot */
-  httpUpdater.setup(&httpServer);
-  httpServer.begin();
-
   /* Show IP Address once conncted */
-  showIP();
+  showStart();
 }
 
 void loop()
@@ -77,6 +72,7 @@ void loop()
               showText("You Pressed Left!");
               break;
             case 2:
+              startUpdateServer();
               showIP();
               break;
             case 3:
@@ -107,6 +103,18 @@ void showText(char *text)
   display.update();
 }
 
+void startUpdateServer()
+{
+  if (allreadystarted == 0) {
+    /* Once connected to WiFi, startup the OTA update server */
+    /* In other sketches, we enter OTA mode only when center button is pressed i.e. digitalRead(5)  == 0 */
+    /* But in this default sketch, it is always in OTA mode on boot */
+    httpUpdater.setup(&httpServer);
+    httpServer.begin();
+    allreadystarted = 1;
+  }
+}
+
 void showIP(){
   display.setRotation(3); //even = portrait, odd = landscape
   display.fillScreen(GxEPD_WHITE);
@@ -126,5 +134,26 @@ void showIP(){
   display.println("Go to:");
   display.println(urlCharArray);
   display.println("to upload a new sketch.");
+  display.update();  
+}
+
+void showStart(){
+  display.setRotation(3); //even = portrait, odd = landscape
+  display.fillScreen(GxEPD_WHITE);
+  const GFXfont* f = &FreeMonoBold9pt7b ;
+  display.setTextColor(GxEPD_BLACK);
+  display.setFont(f);
+  display.setCursor(0,10);
+
+  String ip = WiFi.localIP().toString();
+  String url = WiFi.localIP().toString() + ":"+String(port)+"/update";
+  byte charArraySize = url.length() + 1;
+  char urlCharArray[charArraySize];
+  url.toCharArray(urlCharArray, charArraySize);
+
+  display.println("Badgy was restarted");
+  display.println("");  
+  display.println("Press Center to ");
+  display.println("start OTA-Feature");
   display.update();  
 }
